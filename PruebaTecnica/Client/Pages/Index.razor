@@ -1,0 +1,133 @@
+﻿@page "/"
+
+@inject NavigationManager NavigationManager
+@inject IEmpleadoService EmpleadoService
+@inject ISnackbar Snackbar
+
+<PageTitle>@tituloPagina</PageTitle>
+
+<MudGrid Justify="Justify.Center">
+    <MudItem lg="12" md="12" sm="12">
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h4" Align="Align.Center">
+                        @tituloPagina
+                    </MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudFab Size="@Size.Medium"
+                            StartIcon="@Icons.Material.Filled.Add"
+                            Color="@Color.Primary"
+                            ButtonType="ButtonType.Button"
+                            OnClick="RegistrarEmpleado"
+                            DisableElevation="true"></MudFab>
+                </CardHeaderActions>
+            </MudCardHeader>
+        </MudCard>
+
+    </MudItem>
+    <MudItem lg="12" md="12" sm="12">
+        <MudDataGrid Items="@EmpleadoService.Empleados"
+                     Filterable="false"
+                     SortMode="@SortMode.None"
+                     Groupable="false"
+                     Class="p-4"
+                     Elevation="3"
+                     Hover="true"
+                     Striped="true"
+                     Dense="true"                     
+                     Breakpoint="Breakpoint.Sm"
+                     RowsPerPage="10">
+            <Columns>
+                <PropertyColumn Title="ID"
+                                Property="x => x.EmpleadoId" />
+                <PropertyColumn Title="NOMBRE"
+                                Property="x => x.Nombres" />
+                <PropertyColumn Title="DESCRIPCION"
+                                Property="x => x.Apellidos" />
+                <PropertyColumn Title="FECHA NACIMIENTO"
+                                Property="x => x.FechaNacimiento"
+                                Culture="@CultureInfo.InvariantCulture"
+                                Format="dd/MM/yyyy" />
+                <PropertyColumn Title="FECHA INGRESO"
+                                Property="x => x.FechaIngreso"
+                                Culture="@CultureInfo.InvariantCulture"
+                                Format="dd/MM/yyyy" />
+                <PropertyColumn Title="AFP"
+                                Property="x => x.Afp" />
+                <PropertyColumn Title="CARGO"
+                                Property="x => x.Cargo" />
+                <PropertyColumn Title="SUELDO"
+                                Property="x => x.Sueldo"
+                                Culture="@CultureInfo.InvariantCulture"
+                                Format="F2" />
+
+                <TemplateColumn Title="ACCIONES">
+                    <CellTemplate>
+                        <MudStack Row="true" AlignItems="AlignItems.End" Justify="Justify.Center">
+                            <MudFab Size="@Size.Medium"
+                                    StartIcon="@Icons.Material.Filled.Edit"
+                                    Color="@Color.Warning"
+                                    ButtonType="ButtonType.Button"
+                                    OnClick="()=>ActualizarEmpleado(context.Item.EmpleadoId)">
+                            </MudFab>
+                            <MudFab Size="@Size.Medium"
+                                    StartIcon="@Icons.Material.Filled.Delete"
+                                    Color="@Color.Error"
+                                    ButtonType="ButtonType.Button"
+                                    OnClick="()=>EliminarEmpleado(context.Item.EmpleadoId)">
+                            </MudFab>
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <NoRecordsContent>
+                <MudText Typo="Typo.h5">No se encontraron empleados</MudText>
+            </NoRecordsContent>
+        </MudDataGrid>
+    </MudItem>
+</MudGrid>
+
+@code {
+
+    string tituloPagina = "Listado de Empleados";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarEmpleados();
+    }
+
+    private void RegistrarEmpleado()
+    {
+        NavigationManager.NavigateTo($"{Routes.routeEmpleadoRegistro}");
+    }
+
+    private async Task ActualizarEmpleado(int empleadoId)
+    {
+        NavigationManager.NavigateTo($"{Routes.routeEmpleadoRegistro}/{empleadoId}");
+    }
+    private async Task EliminarEmpleado(int empleadoId)
+    {
+        var response = await EmpleadoService.EliminarEmpleado(empleadoId);
+
+        if (response.Success)
+        {
+            Snackbar.Clear();
+            Snackbar.Add($"{response.Message}", Severity.Success);
+            await CargarEmpleados();
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Add($"{response.Message}", Severity.Error);
+            await CargarEmpleados();
+        }
+    }
+
+    private async Task CargarEmpleados()
+    {
+        EmpleadoService.OnChange += StateHasChanged;
+        await EmpleadoService.GetEmpleados();
+    }
+}

@@ -1,0 +1,187 @@
+﻿@page "/empleado/empleado"
+@page "/empleado/empleado/{empleadoId:int}"
+
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IEmpleadoService EmpleadoService
+
+<PageTitle>@tituloPagina</PageTitle>
+
+<EditForm Model="empleadoModel" Context="formContext" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+
+    <MudGrid Justify="Justify.Center">
+        <MudItem lg="12">
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">@tituloPagina </MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Justify="Justify.FlexStart">
+                        <MudItem lg="6" md="6" sm="12" xs="12">
+                            <MudTextField Label="Nombres"
+                                          T="string"
+                                          Placeholder="Ingrese los nombres."
+                                          Variant="Variant.Outlined"
+                                          Class="p-0"
+                                          @bind-Value="empleadoModel.Nombres"
+                                          For="@(() => empleadoModel.Nombres)" />
+                        </MudItem>
+                        <MudItem lg="6" md="6" sm="12" xs="12">
+                            <MudTextField Label="Apellidos"
+                                          T="string"
+                                          Placeholder="Ingrese los apellidos."
+                                          Variant="Variant.Outlined"
+                                          Class="p-0"
+                                          @bind-Value="empleadoModel.Apellidos"
+                                          For="@(() => empleadoModel.Apellidos)" />
+                        </MudItem>
+                        <MudItem lg="6" md="6" sm="12" xs="12">
+                            <MudDatePicker class="form-control mb-2 mr-sm-2"
+                                           @bind-Date="empleadoModel.FechaNacimiento"
+                                           DateFormat="dd/MM/yyyy"
+                                           Variant="Variant.Outlined"
+                                           Label="Fecha Nacimiento" />
+                        </MudItem>
+                        <MudItem lg="6" md="6" sm="12" xs="12">
+                            <MudDatePicker class="form-control mb-2 mr-sm-2"
+                                           @bind-Date="empleadoModel.FechaIngreso"
+                                           DateFormat="dd/MM/yyyy"
+                                           Variant="Variant.Outlined"
+                                           Label="Fecha Ingreso" />
+                        </MudItem>
+                        <MudItem lg="6" md="6" sm="12" xs="12">
+                            <MudTextField Label="AFP"
+                                          T="string"
+                                          Placeholder="Ingrese la AFP."
+                                          Variant="Variant.Outlined"
+                                          Class="p-0"
+                                          @bind-Value="empleadoModel.Afp"
+                                          For="@(() => empleadoModel.Afp)" />
+                        </MudItem>
+                        <MudItem lg="6" md="6" sm="12" xs="12">
+                            <MudTextField Label="Cargo"
+                                          T="string"
+                                          Placeholder="Ingrese el cargo."
+                                          Variant="Variant.Outlined"
+                                          Class="p-0"
+                                          @bind-Value="empleadoModel.Cargo"
+                                          For="@(() => empleadoModel.Cargo)" />
+                        </MudItem>
+                        <MudItem lg="6" md="6" sm="12" xs="12">
+                            <MudNumericField T="decimal"
+                                             Label="Sueldo"
+                                             HelperText="Ingrese el sueldo"
+                                             Culture="@CultureInfo.InvariantCulture"
+                                             Variant="Variant.Outlined"
+                                             @bind-Value="empleadoModel.Sueldo"
+                                             For="@(() => empleadoModel.Sueldo)"
+                                             Class="p-1"
+                                             Min="0"
+                                             Format="F2" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Disabled="@guardarEmpleado" Size="Size.Large" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" Class="mx-2">
+                        @if (guardarEmpleado)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Guardando...</MudText>
+                        }
+                        else
+                        {
+                            @btnGuardarTexto
+                        }
+                    </MudButton>
+                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Size="Size.Large" StartIcon="@Icons.Material.Filled.Cancel" Class="mx-2"
+                               Color="Color.Error" OnClick="Cancel"> Cancelar</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? EmpleadoId { get; set; }
+
+    string tituloPagina = "Registro de Empleado";
+    Empleado empleadoModel = new Empleado();
+    bool guardarEmpleado = false;
+
+    string btnGuardarTexto = "Guardar";
+    private DateTime? fechaNacimiento = DateTime.Today;
+    private DateTime? fechaIngreso = DateTime.Today;
+
+    private async Task OnValidSubmit()
+    {
+        guardarEmpleado = true;
+
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+
+        if (EmpleadoId == null)
+        {
+            var response = await EmpleadoService.CrearEmpleado(empleadoModel);
+            guardarEmpleado = false;
+
+            if (response != null && response.Success)
+            {
+                Snackbar.Clear();
+                Snackbar.Add($"{response.Message}", Severity.Success);
+                NavigationManager.NavigateTo($"{Routes.routeHome}");
+            }
+            else
+            {
+                Snackbar.Clear();
+                Snackbar.Add($"{response!.Message}", Severity.Error);
+            }
+        }
+        else
+        {
+            var response = await EmpleadoService.ActualizarEmpleado(empleadoModel);
+            guardarEmpleado = false;
+
+            if (response != null && response.Success)
+            {
+                Snackbar.Clear();
+                Snackbar.Add($"{response.Message}", Severity.Success);
+                NavigationManager.NavigateTo($"{Routes.routeHome}");
+            }
+            else
+            {
+                Snackbar.Clear();
+                Snackbar.Add($"{response!.Message}", Severity.Error);
+            }
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (EmpleadoId != null)
+        {
+            tituloPagina = "Actualizar Empleado";
+            var response = await EmpleadoService.GetEmpleadoById((int)EmpleadoId);
+            // _soloLectura = true;
+
+            if (response.Success && response.Data != null)
+            {
+                empleadoModel.EmpleadoId = response.Data.EmpleadoId;
+                empleadoModel.Nombres = response.Data.Nombres;
+                empleadoModel.Apellidos = response.Data.Apellidos;
+                empleadoModel.FechaNacimiento = response.Data.FechaNacimiento;
+                empleadoModel.FechaIngreso = response.Data.FechaIngreso;
+                empleadoModel.Afp = response.Data.Afp;
+                empleadoModel.Cargo = response.Data.Cargo;
+                empleadoModel.Sueldo = response.Data.Sueldo;
+            }
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo($"{Routes.routeHome}");
+    }
+}
